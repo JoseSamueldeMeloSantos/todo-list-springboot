@@ -34,6 +34,7 @@ Aplicação de lista de tarefas (**Todo List**) desenvolvida como prática de ba
    spring.datasource.password=sua_senha
    spring.jpa.hibernate.ddl-auto=update
    spring.jpa.show-sql=true
+   spring.jpa.properties.hibernate.format_sql=true
    ```
 
 4. **Rode o projeto**
