@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo List</title>
+    <style>
+        :root {
+            --cor1: #FA3419; /* vermelho vibrante */
+            --cor2: #F3E1B6; /* bege claro */
+            --cor3: #7CBC9A; /* verde claro médio */
+            --cor4: #23998E; /* verde escuro médio */
+            --cor5: #1D5E69; /* azul petróleo escuro */
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: var(--cor5);
+            display: flex;
+            justify-content: center;
+            padding: 50px;
+            margin: 0;
+        }
+        .container {
+            background: var(--cor4);
+            padding: 20px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: var(--cor2);
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: none; /* removida a borda */
+            border-radius: 4px;
+            background: var(--cor2);
+            color: #333;
+            font-size: 16px;
+            outline: none; /* remove a borda de foco do navegador */
+        }
+        .add-btn {
+            width: 40px;
+            height: 40px;
+            margin-left: 8px;
+            border-radius: 50%;
+            background: var(--cor3);
+            color: white;
+            font-size: 24px;
+            line-height: 0;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .add-btn:hover {
+            background: #c82a14;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+        li {
+            padding: 10px;
+            border-bottom: 1px solid var(--cor3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--cor2);
+        }
+        li.completed {
+            text-decoration: line-through;
+            color: #ccc;
+        }
+        .delete {
+            background: var(--cor1);
+            border: none;
+            padding: 5px 8px;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+        .delete:hover {
+            background: #c82a14;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Todo List</h1>
+    <div class="input-group">
+        <input type="text" id="taskInput" placeholder="Nova tarefa..." />
+        <button class="add-btn" onclick="addTask()">+</button>
+    </div>
+    <ul id="taskList"></ul>
+</div>
+
+<script>
+    // Carrega tarefas ao abrir
+    window.onload = loadTasks;
+
+    function loadTasks() {
+        fetch('http://localhost:8080/tasks')
+            .then(response => response.json())
+            .then(tasks => {
+                const taskList = document.getElementById("taskList");
+                taskList.innerHTML = "";
+
+                tasks.forEach(task => {
+                    const li = document.createElement("li");
+                    li.textContent = task.title;
+                    if(task.completed) li.classList.add("completed");
+
+                    // Alterna completed ao clicar na tarefa
+                    li.addEventListener("click", function() {
+                        fetch(`http://localhost:8080/tasks/${task.id}`, {
+                            method: 'PUT',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ title: task.title, completed: !task.completed })
+                        })
+                            .then(() => loadTasks());
+                    });
+
+                    const deleteBtn = document.createElement("button");
+                    deleteBtn.textContent = "Excluir";
+                    deleteBtn.className = "delete";
+                    deleteBtn.onclick = function() {
+                        fetch(`http://localhost:8080/tasks/${task.id}`, {
+                            method: 'DELETE'
+                        })
+                            .then(() => loadTasks());
+                    };
+
+                    li.appendChild(deleteBtn);
+                    taskList.appendChild(li);
+                });
+            })
+            .catch(error => console.error('Erro ao carregar tarefas:', error));
+    }
+
+    function addTask() {
+        const taskInput = document.getElementById("taskInput");
+        const taskText = taskInput.value.trim();
+        if (taskText === "") {
+            alert("Digite uma tarefa!");
+            return;
+        }
+
+        fetch('http://localhost:8080/tasks', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ title: taskText, completed: false })
+        })
+            .then(response => response.json())
+            .then(() => {
+                loadTasks();
+                taskInput.value = "";
+            })
+            .catch(error => console.error('Erro ao adicionar tarefa:', error));
+    }
+</script>
+
+</body>
+</html>
